@@ -3,13 +3,17 @@ version: '3'
 services:
   map:
     image: overv/openstreetmap-tile-server
+    security_opt:
+      - seccomp=unconfined  # 关闭 seccomp 保护
     volumes:
       - ./data/database:/data/database/
       - ./data/tiles:/data/tiles/
       - ./data/style:/data/style/
+      - ./external_data:/external_data
+      - ./style/run.sh:/run.sh
     ports:
       # 若8080已被使用，请修改为其它端口
-      - "8080:80"
+      - "8090:80"
       - "8432:5432"
     environment:
       - ALLOW_CORS=enabled
@@ -22,4 +26,5 @@ services:
     
     # 如果日志中记录到 "ERROR: could not resize shared memory segment / No space left on device"
     # 意味着默认的64MB共享内存太少了，需要增加shm-size的值
-    shm_size: "1024M"
+    shm_size: "128M"
+    

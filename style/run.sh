@@ -13,10 +13,9 @@ function setPostgresPassword() {
 }
 
 if [ "$#" -ne 1 ]; then
-    echo "usage: <import|append|run>"
+    echo "usage: <import|run>"
     echo "commands:"
     echo "    import: Set up the database and import /data/region.osm.pbf"
-    echo "    append: only import /data/region.osm.pbf"
     echo "    run: Runs Apache and renderd to serve tiles at /tile/{z}/{x}/{y}.png"
     echo "environment variables:"
     echo "    THREADS: defines number of threads used for importing / tile rendering"
@@ -28,34 +27,11 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
-# 在已有数据的基础上导入pbf文件
-if [ "$1" == "append" ]; then
-    if ! [ -f /data/db-initialed]; then
-        echo "please run import first before run append"
-        exit 1
-    fi
-
-    # flat-nodes
-    if [ "${FLAT_NODES:-}" == "enabled" ] || [ "${FLAT_NODES:-}" == "1" ]; then
-        OSM2PGSQL_EXTRA_ARGS="${OSM2PGSQL_EXTRA_ARGS:-} --flat-nodes /data/database/flat_nodes.bin"
-    fi
-
-    # Import data
-    sudo -u renderer osm2pgsql -d gis --append --slim -G --hstore  \
-      --tag-transform-script /data/style/${NAME_LUA:-openstreetmap-carto.lua}  \
-      --number-processes ${THREADS:-4}  \
-      -S /data/style/${NAME_STYLE:-openstreetmap-carto.style}  \
-      /data/region.osm.pbf  \
-      ${OSM2PGSQL_EXTRA_ARGS:-}  \
-    ;
-    exit
-fi
-
 set -x
 
 # if there is no custom style mounted, then use osm-carto
 if [ ! "$(ls -A /data/style/)" ]; then
-    mv /home/renderer/src/openstreetmap-carto-backup/* /data/style/
+  mv /home/renderer/src/openstreetmap-carto-backup/* /data/style/
 fi
 
 # carto build
@@ -69,6 +45,7 @@ if [ "$1" == "import" ]; then
     mkdir -p /data/database/postgres/
     chown renderer: /data/database/
     chown -R postgres: /var/lib/postgresql /data/database/postgres/
+    
     if [ ! -f /data/database/postgres/PG_VERSION ]; then
         sudo -u postgres /usr/lib/postgresql/14/bin/pg_ctl -D /data/database/postgres/ initdb -o "--locale C.UTF-8"
     fi
@@ -80,19 +57,18 @@ if [ "$1" == "import" ]; then
 
     service postgresql start
     
-    # sudo -u postgres createuser renderer
     sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='renderer';" | grep -q 1 || sudo -u postgres createuser renderer
 
-    # sudo -u postgres createdb -E UTF8 -O renderer gis
-    # sudo -u postgres psql -d gis -c "CREATE EXTENSION postgis;"
-    # sudo -u postgres psql -d gis -c "CREATE EXTENSION hstore;"
-    # sudo -u postgres psql -d gis -c "ALTER TABLE geometry_columns OWNER TO renderer;"
-    # sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
-    sudo -u postgres psql -c "SELECT 1 FROM pg_database WHERE datname = 'gis';" | grep -q 1 || sudo -u postgres createdb -E UTF8 -O renderer gis \
-        && sudo -u postgres psql -d gis -c "CREATE EXTENSION postgis;" \
-        && sudo -u postgres psql -d gis -c "CREATE EXTENSION hstore;" \
-        && sudo -u postgres psql -d gis -c "ALTER TABLE geometry_columns OWNER TO renderer;" \
-        && sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
+    if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname = 'gis';" | grep -q 1; then
+      # 数据库不存在时，才执行这些命令
+      sudo -u postgres createdb -E UTF8 -O renderer gis
+      sudo -u postgres psql -d gis -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+      sudo -u postgres psql -d gis -c "CREATE EXTENSION IF NOT EXISTS hstore;"
+      sudo -u postgres psql -d gis -c "ALTER TABLE geometry_columns OWNER TO renderer;"
+      sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
+    else
+      echo 'Database gis already exists. Skipping operations.'
+    fi
     setPostgresPassword
 
     # Download guangdong as sample if no data is provided
@@ -157,8 +133,12 @@ if [ "$1" == "import" ]; then
     fi
 
     # Register that data has changed for mod_tile caching purposes
-    sudo -u renderer touch /data/database/planet-import-complete
-    sudo -u renderer touch /data/db-initialed
+    if [ ! -f /data/database/planet-import-complete ]; then
+      sudo -u renderer touch /data/database/planet-import-complete
+    fi
+    if [ ! -f /data/db-initialed ]; then
+      sudo -u renderer touch /data/db-initialed
+    fi
 
     service postgresql stop
 
@@ -191,6 +171,7 @@ if [ "$1" == "run" ]; then
 
     # Fix postgres data privileges
     chown -R postgres: /var/lib/postgresql/ /data/database/postgres/
+    chown renderer: /data/tiles/
 
     # Configure Apache CORS
     if [ "${ALLOW_CORS:-}" == "enabled" ] || [ "${ALLOW_CORS:-}" == "1" ]; then
@@ -198,6 +179,7 @@ if [ "$1" == "run" ]; then
     fi
 
     # Initialize PostgreSQL and Apache
+    # Initialize PostgreSQL
     createPostgresConfig
     service postgresql start
     service apache2 restart
@@ -213,7 +195,6 @@ if [ "$1" == "run" ]; then
         sudo -u renderer touch /var/log/tiles/osmosis.log; tail -f /var/log/tiles/osmosis.log >> /proc/1/fd/1 &
         sudo -u renderer touch /var/log/tiles/expiry.log; tail -f /var/log/tiles/expiry.log >> /proc/1/fd/1 &
         sudo -u renderer touch /var/log/tiles/osm2pgsql.log; tail -f /var/log/tiles/osm2pgsql.log >> /proc/1/fd/1 &
-
     fi
 
     # Run while handling docker stop's SIGTERM

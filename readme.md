@@ -29,7 +29,17 @@ docker-compose up -d
   **注**：由于import导入时错误,不想重新删除在跑,直接在运行的容器里面执行了external-data.yml相关的命令，以及在这之后的命令
 
 
-### linux import 
+### entrypoint指定文件是可行的
+由于在windows进行了sh文件的修改，换行符导致linux执行出现no such file ,通过如下命令解决：
+```bash
+sed -i 's/\r$//' ./style/run.sh
+```
+**注**修改了sh文件就需要执行上面语句修正
+
+
+### linux下出现的问题
+> 可能是因为使用的服务器docker版本的原因导致出现各种问题，通过增加security-opt配置得以解决
+- linux import 
 
 ```bash
 chmod +x import.sh
@@ -44,6 +54,40 @@ chmod +x import.sh
  docker run --security-opt seccomp=unconfined 。。。
 ```
 
+- linux run 
+> 错误 postgresql: unrecognized service
+
+```yml
+version: '3'
+
+services:
+  map:
+    image: overv/openstreetmap-tile-server
+    security_opt:
+      - seccomp=unconfined  # 关闭 seccomp 保护
+    volumes:
+      - ./data/database:/data/database/
+      - ./data/tiles:/data/tiles/
+      - ./data/style:/data/style/
+      - ./external_data:/external_data
+      - ./style/run.sh:/run.sh
+    ports:
+      # 若8080已被使用，请修改为其它端口
+      - "8090:80"
+      - "8432:5432"
+    environment:
+      - ALLOW_CORS=enabled
+      # 瓦片服务使用的线程数默认为4，可根据实际情况增减
+      #- THREADS=24
+      # 瓦片服务默认使用 800M RAM cache，可根据实际情况增减
+      #- OSM2PGSQL_EXTRA_ARGS="-C 4096"
+      #- UPDATES=enable
+    command: "run"
+    
+    # 如果日志中记录到 "ERROR: could not resize shared memory segment / No space left on device"
+    # 意味着默认的64MB共享内存太少了，需要增加shm-size的值
+    shm_size: "128M"
+```
 
 ### pbf文件处理
 [工具](https://github.com/osmcode/osmium-tool)
