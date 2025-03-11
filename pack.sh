@@ -1,0 +1,1 @@
+docker run --rm -v $PWD:/openstreetmap alpine tar cvf /openstreetmap/openstreetmap.tar /openstreetmap/docker-compose.yaml /openstreetmap/data

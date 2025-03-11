@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  map:
+    image: overv/openstreetmap-tile-server
+    volumes:
+      - ./data/database:/data/database/
+      - ./data/tiles:/data/tiles/
+      - ./data/style:/data/style/
+    ports:
+      # 若8080已被使用，请修改为其它端口
+      - "8080:80"
+      - "8432:5432"
+    environment:
+      - ALLOW_CORS=enabled
+      # 瓦片服务使用的线程数默认为4，可根据实际情况增减
+      #- THREADS=24
+      # 瓦片服务默认使用 800M RAM cache，可根据实际情况增减
+      #- OSM2PGSQL_EXTRA_ARGS="-C 4096"
+      #- UPDATES=enable
+    command: "run"
+    
+    # 如果日志中记录到 "ERROR: could not resize shared memory segment / No space left on device"
+    # 意味着默认的64MB共享内存太少了，需要增加shm-size的值
+    shm_size: "1024M"
