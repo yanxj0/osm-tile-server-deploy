@@ -10,7 +10,7 @@ sources:
     type: shp
     # Where to get it
     # url: https://osmdata.openstreetmap.de/download/simplified-water-polygons-split-3857.zip
-    url: files:///external_data/simplified-water-polygons-split-3857.zip
+    url: file://../../external_data/simplified-water-polygons-split-3857.zip
     # The location within the archive
     file: simplified-water-polygons-split-3857/simplified_water_polygons.shp
     archive:
@@ -25,7 +25,7 @@ sources:
   water_polygons:
     type: shp
     # url: https://osmdata.openstreetmap.de/download/water-polygons-split-3857.zip
-    url: files:///external_data/water-polygons-split-3857.zip
+    url: file://../../external_data/water-polygons-split-3857.zip
     file: water-polygons-split-3857/water_polygons.shp
     archive:
       format: zip
@@ -38,7 +38,7 @@ sources:
   icesheet_polygons:
     type: shp
     # url: https://osmdata.openstreetmap.de/download/antarctica-icesheet-polygons-3857.zip
-    url: files:///external_data/antarctica-icesheet-polygons-3857.zip
+    url: file://../../external_data/antarctica-icesheet-polygons-3857.zip
     file: antarctica-icesheet-polygons-3857/icesheet_polygons.shp
     archive:
       format: zip
@@ -51,7 +51,7 @@ sources:
   icesheet_outlines:
     type: shp
     # url: https://osmdata.openstreetmap.de/download/antarctica-icesheet-outlines-3857.zip
-    url: files:///external_data/antarctica-icesheet-outlines-3857.zip
+    url: file://../../external_data/antarctica-icesheet-outlines-3857.zip
     file: antarctica-icesheet-outlines-3857/icesheet_outlines.shp
     ogropts:
       - "-explodecollections"
@@ -67,7 +67,7 @@ sources:
   ne_110m_admin_0_boundary_lines_land:
     type: shp
     # url: https://naturalearth.s3.amazonaws.com/110m_cultural/ne_110m_admin_0_boundary_lines_land.zip
-    url: files:///external_data/ne_110m_admin_0_boundary_lines_land.zip
+    url: file://../../external_data/ne_110m_admin_0_boundary_lines_land.zip
     file: ne_110m_admin_0_boundary_lines_land.shp
     ogropts: &ne_opts
       - "--config"
