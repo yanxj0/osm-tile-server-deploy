@@ -102,6 +102,12 @@ chown renderer: /data/tiles/
 # 在docker-compose.yml添加映射
  - ./html:/var/www/html/
 ```
+- linux arm 注记乱码
+```yml
+# 在docker-compose.yml添加映射
+- ./fonts/unifont-Medium.ttf:/usr/share/fonts/unifont-Medium.ttf  # arm镜像字体缺失
+- ./fonts/NotoSansCJK-Regular.ttc:/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc
+```
 
 ### pbf文件处理
 [工具](https://github.com/osmcode/osmium-tool)

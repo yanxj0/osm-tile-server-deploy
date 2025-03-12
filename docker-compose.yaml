@@ -11,6 +11,8 @@ services:
       - ./data/style:/data/style/
       - ./external_data:/external_data
       # - ./html:/var/www/html/ # arm版本需要开启
+      # - ./fonts/unifont-Medium.ttf:/usr/share/fonts/unifont-Medium.ttf  # arm镜像字体缺失
+      # - ./fonts/NotoSansCJK-Regular.ttc:/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc
       - ./style/run.sh:/run.sh
     ports:
       # 若8080已被使用，请修改为其它端口
