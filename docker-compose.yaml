@@ -10,6 +10,7 @@ services:
       - ./data/tiles:/data/tiles/
       - ./data/style:/data/style/
       - ./external_data:/external_data
+      # - ./html:/var/www/html/ # arm版本需要开启
       - ./style/run.sh:/run.sh
     ports:
       # 若8080已被使用，请修改为其它端口

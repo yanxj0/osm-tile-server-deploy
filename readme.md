@@ -16,13 +16,13 @@ docker-compose up -d
 ```
 
 ### 部署记录
-- import导入
+- import导入   
   修改了import.cmd里面的style卷映射(单引号改成双引号);entrypoint入口修改(/data/style/run.sh不存在);
 ```cmd
  .\import.cmd .\pbf\china-latest.osm.pbf local
 ```
 
-- external_data的导入
+- external_data的导入   
   在前面的run.sh脚本有这些数据导入,由于style的内容是脚本从镜像里拷出来的，所以不支持本地zip数据导入，需要做以下修改
   - 将get-external-data.py覆盖到data/style/scripts下的同名文件
   - 将external-data.yml覆盖到data/style目录下的同名文件(注意file://后面部分相对路径)
@@ -55,7 +55,7 @@ chmod +x import.sh
 ```
 
 - linux run 
-> 错误 postgresql: unrecognized service
+> 错误 postgresql: unrecognized service  同上配置security-opt
 
 ```yml
 version: '3'
@@ -87,6 +87,20 @@ services:
     # 如果日志中记录到 "ERROR: could not resize shared memory segment / No space left on device"
     # 意味着默认的64MB共享内存太少了，需要增加shm-size的值
     shm_size: "128M"
+```
+
+- linux tile 404
+> 问题：/var/cache/renderd/tiles/default: Permission denied
+
+```sh
+# 在容器内部执行(使用外部run.sh运行的已支持)
+chown renderer: /data/tiles/
+```
+- linux arm html打开错误
+> /var/www/html/index.html 引用了在线leaflet地址
+```yml
+# 在docker-compose.yml添加映射
+ - ./html:/var/www/html/
 ```
 
 ### pbf文件处理
