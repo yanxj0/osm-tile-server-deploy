@@ -10,6 +10,8 @@ docker pull savardfs/openstreetmap-tile-server-arm
 # 导入 linux执行import.sh
 .\import.cmd .\pbf\china.osm.pbf local
 
+# 在导入的过程中，将style的内容拷贝到/data/style 下
+
 # 运行 
 docker-compose up -d
 
